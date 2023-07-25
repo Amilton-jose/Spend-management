@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	template="WEB-INF/template/Layout.xhtml">
+
+	<ui:define name="titulo">
+	Cadastro de Gastos
+</ui:define>
+
+	<ui:define name="conteudo">
+		<f:metadata>
+			<f:viewAction action="#{gestaoGastosBean.todosGastos}" />
+		</f:metadata>
+
+
+		<h:form id="frm">
+			<p:growl id="messages" />
+
+			<p:toolbar id="toolbar">
+				<f:facet name="left">
+					<p:inputText id="termoPesquisa"
+						placeholder="Digite aqui um termo para pesquisa..." size="30"
+						value="#{gestaoGastosBean.termoPesquisa}" />
+
+					<p:commandButton value="Pesquisar" icon="fa fa-search"
+						update="gastosDataTable messages"
+						actionListener="#{gestaoGastosBean.pesquisar}"
+						process="@this termoPesquisa" />
+
+					<span class="ui-separator"> <span
+						class="ui-icon ui-icon-grip-dotted-vertical" />
+					</span>
+
+					<p:commandButton value="Novo" icon="fa fa-plus"
+						actionListener="#{gestaoGastosBean.prepararNovoGasto}"
+						oncomplete="PF('gastoDialogWidgetVar').show()"
+						update="gastoDialog" process="@this">
+						<p:resetInput target="gastoDialog" />
+					</p:commandButton>
+
+					<span class="ui-separator"> <span
+						class="ui-icon ui-icon-grip-dotted-vertical" />
+					</span>
+
+					<p:commandButton title="Editar" icon="fa fa-edit"
+						disabled="#{not gestaoGastosBean.gastoSelecionado}"
+						actionListener="#{gestaoGastosBean.prepararEdicao}"
+						oncomplete="PF('gastoDialogWidgetVar').show()"
+						update="gastoDialog" process="@this">
+						<p:resetInput target="gastoDialog" />
+					</p:commandButton>
+
+
+					<p:commandButton title="Excluir" icon="fa fa-trash"
+						disabled="#{not gestaoGastosBean.gastoSelecionado}"
+						actionListener="#{gestaoGastosBean.excluir}"
+						update="messages gastosDataTable toolbar" process="@this">
+						<p:confirm icon="ui-icon-alert" header="Confirmação de exclusão"
+							message="Tem certeza?" />
+					</p:commandButton>
+
+					<span class="ui-separator"> <span
+						class="ui-icon ui-icon-grip-dotted-vertical" />
+					</span>
+
+					<p:commandButton title="Exportar para o Excel"
+						icon="fa fa-file fa-excel-o" ajax="false">
+						<p:dataExporter type="xls" target="gastosDataTable"
+							fileName="Gestão-de-Gastos" />
+					</p:commandButton>
+
+				</f:facet>
+
+			</p:toolbar>
+
+			<p:spacer height="20px" />
+
+			<p:dataTable id="gastosDataTable"
+				value="#{gestaoGastosBean.listaGastos}" var="gasto"
+				emptyMessage="Não há registros a ser exibido." paginator="true"
+				rows="10" paginatorPosition="bottom" selectionMode="single"
+				selection="#{gestaoGastosBean.gasto}" rowKey="#{gasto.id}">
+
+				<p:ajax event="rowSelect" update="frm:toolbar" />
+
+				<p:ajax event="rowUnselect" update="frm:toolbar" />
+
+				<p:column headerText="Valor" sortBy="#{gasto.valor}">
+					<h:outputText value="#{gasto.valor}">
+						<f:convertNumber pattern="R$ #,##0.00" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="Data">
+					<h:outputText value="#{gasto.data}">
+						<f:convertDateTime pattern="dd/MM/yyyy" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="Descrição">
+					<h:outputText value="#{gasto.descricao}" />
+				</p:column>
+
+				<p:column headerText="Categoria">
+					<h:outputText value="#{gasto.categoria.nome}" />
+				</p:column>
+
+			</p:dataTable>
+
+			<p:dialog id="gastoDialog" header="Novo Gasto"
+				widgetVar="gastoDialogWidgetVar" modal="true" resizable="false"
+				closeOnEscape="true">
+
+				<p:messages id="gastoMsgs" autoUpdate="true" />
+
+				<p:defaultCommand target="salvarComandButton" scope="gastoDialog" />
+
+				<h:panelGrid columns="2" id="gastoPainelGrid"
+					rendered="#{gestaoGastosBean.gasto ne null}">
+
+
+					<p:outputLabel value="Valor" for="valor" />
+					<p:inputText id="valor" size="80" maxlength="120"
+						placeholder="Valor do gasto R$ 0,00"
+						value="#{gestaoGastosBean.gasto.valor}">
+						<f:convertNumber pattern="#,##0.00" />
+					</p:inputText>
+
+
+					<p:outputLabel value="Data" for="data" />
+					<p:calendar id="data" pattern="dd/MM/yyyy" size="30"
+						placeholder="Data do gasto" required="true"
+						requiredMessage="Infome a data do gasto"
+						value="#{gestaoGastosBean.gasto.data}" locale="pt" />
+
+					<p:outputLabel value="Descrição" for="descricao" />
+					<p:inputText id="descricao" size="80" maxlength="120"
+						placeholder="Descrição do gasto"
+						value="#{gestaoGastosBean.gasto.descricao}" />
+
+					<p:outputLabel value="Categoria" for="categoria" />
+					<p:autoComplete id="categoria" size="80"
+						placeholder="Categoria do gasto"
+						completeMethod="#{gestaoGastosBean.completarCategoria}"
+						converter="#{gestaoGastosBean.categoriaConverter}" var="categoria"
+						itemLabel="#{categoria.nome}" itemValue="#{categoria}"
+						value="#{gestaoGastosBean.gasto.categoria}" />
+
+					<p:outputLabel />
+					<p:commandButton id="salvarComandButton" value="Salvar"
+						actionListener="#{gestaoGastosBean.salvar}"
+						update="gastoPainelGrid gastoMsgs"
+						oncomplete="if (!args.validationFailed) PF('gastoDialogWidgetVar').hide()"
+						process="gastoDialog" />
+
+				</h:panelGrid>
+			</p:dialog>
+
+		</h:form>
+		<h:form id="formGastos">
+			<p:messages autoUpdate="true" closable="true" />
+
+			<h3>Relatórios de Gastos</h3>
+
+			<p:commandButton value="Calcular Total"
+				actionListener="#{gestaoGastosBean.totalDeGastosPorCategoria}"
+				update="tabelaTotais totalGeral"
+				process="@this" />
+
+			<h3>Totais por Categoria</h3>
+			<p:dataTable
+				value="#{gestaoGastosBean.totalPorCategoria.entrySet().toArray()}"
+				var="totalCategoria" id="tabelaTotais"
+				emptyMessage="Não há registros a ser exibido.">
+				<p:column>
+					<p:outputLabel
+						value="Categoria: #{totalCategoria.key} - Total: R$ #{totalCategoria.value}" />
+				</p:column>
+			</p:dataTable>
+			
+			<h3>Total Geral de Gastos</h3>
+			<h:outputText id="totalGeral"
+				value="R$ #{gestaoGastosBean.calcularTotalDeGastos()}"/>
+				
+		</h:form>
+
+
+
+	</ui:define>
+
+
+</ui:composition>
