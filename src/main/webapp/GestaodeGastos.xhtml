@@ -7,7 +7,7 @@
 	template="WEB-INF/template/Layout.xhtml">
 
 	<ui:define name="titulo">
-	Cadastro de Gastos
+	Sistema de Gerenciamento de Gastos
 </ui:define>
 
 	<ui:define name="conteudo">
@@ -57,7 +57,8 @@
 					<p:commandButton title="Excluir" icon="fa fa-trash"
 						disabled="#{not gestaoGastosBean.gastoSelecionado}"
 						actionListener="#{gestaoGastosBean.excluir}"
-						update="messages gastosDataTable toolbar" process="@this">
+						update="messages gastosDataTable toolbar :formGastos:totalGeral graficoGastos"
+						process="@this">
 						<p:confirm icon="ui-icon-alert" header="Confirmação de exclusão"
 							message="Tem certeza?" />
 					</p:commandButton>
@@ -150,44 +151,31 @@
 						value="#{gestaoGastosBean.gasto.categoria}" />
 
 					<p:outputLabel />
+
 					<p:commandButton id="salvarComandButton" value="Salvar"
-						actionListener="#{gestaoGastosBean.salvar}"
-						update="gastoPainelGrid gastoMsgs"
+						action="#{gestaoGastosBean.salvar}"
+						update="gastoPainelGrid gastoMsgs :formGastos:totalGeral graficoGastos"
 						oncomplete="if (!args.validationFailed) PF('gastoDialogWidgetVar').hide()"
-						process="gastoDialog" />
+						process="gastoDialog">
+						<f:ajax execute="@form" render="totalGeral" />
+					</p:commandButton>
+
 
 				</h:panelGrid>
 			</p:dialog>
 
 		</h:form>
 		<h:form id="formGastos">
-			<p:messages autoUpdate="true" closable="true" />
 
-			<h3>Relatórios de Gastos</h3>
-
-			<p:commandButton value="Calcular Total"
-				actionListener="#{gestaoGastosBean.totalDeGastosPorCategoria}"
-				update="tabelaTotais totalGeral"
-				process="@this" />
-
-			<h3>Totais por Categoria</h3>
-			<p:dataTable
-				value="#{gestaoGastosBean.totalPorCategoria.entrySet().toArray()}"
-				var="totalCategoria" id="tabelaTotais"
-				emptyMessage="Não há registros a ser exibido.">
-				<p:column>
-					<p:outputLabel
-						value="Categoria: #{totalCategoria.key} - Total: R$ #{totalCategoria.value}" />
-				</p:column>
-			</p:dataTable>
-			
-			<h3>Total Geral de Gastos</h3>
+			<h2>Valor Total de Gastos</h2>
 			<h:outputText id="totalGeral"
-				value="R$ #{gestaoGastosBean.calcularTotalDeGastos()}"/>
-				
+				value="R$ #{gestaoGastosBean.calcularTotalDeGastos()}"
+				style="font-size: 40px" />
+
 		</h:form>
 
-
+		<p:chart type="bar" model="#{gestaoGastosBean.barChartModel}"
+			id="graficoGastos" />
 
 	</ui:define>
 
